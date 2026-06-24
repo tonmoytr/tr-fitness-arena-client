@@ -21,12 +21,40 @@ export async function getLatestForumPosts() {
 
     // Chronological sorting: Newest posts cascade to the top
     const sortedPosts = approvedPosts.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
     );
 
     return { data: sortedPosts, error: null };
   } catch (error) {
     console.error("DAL Error [getLatestForumPosts]:", error);
-    return { data: [], error: error.message || "Failed to retrieve forum posts." };
+    return {
+      data: [],
+      error: error.message || "Failed to retrieve forum posts.",
+    };
+  }
+}
+
+/**
+ * Server-Side Data Access Layer (DAL) for querying a single Forum Post by ID
+ * Runs exclusively on the Server.
+ */
+export async function getForumPostById(postId) {
+  try {
+    const data = MOCK_FORUMS_DB;
+
+    // Find matching document index
+    const targetPost = data.find((item) => item._id === postId);
+
+    if (!targetPost) {
+      throw new Error("Target community discussion could not be located.");
+    }
+
+    return { data: targetPost, error: null };
+  } catch (error) {
+    console.error(`DAL Error [getForumPostById for ID ${postId}]:`, error);
+    return {
+      data: null,
+      error: error.message || "Failed to retrieve forum post.",
+    };
   }
 }

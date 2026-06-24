@@ -1,13 +1,16 @@
-import { getApprovedClasses } from "@/lib/actions/classes";
 import HeroBanner from "./components/home/HeroBanner";
 import FeaturedClasses from "./components/home/FeaturedClasses";
 import { getLatestForumPosts } from "@/lib/actions/forum";
 import LatestDiscussions from "./components/home/LatestDiscussion";
+import WhyJoin from "./components/home/WhyJoinUs";
+import MeetTrainers from "./components/home/MeetTrainers";
+import PricingPlans from "./components/home/PricingPlans";
+import { getFilteredClasses } from "@/lib/actions/classes";
 
 export default async function HomePage() {
   // Fire off both server-side queries in parallel to optimize processing speed
   const [classesResponse, forumResponse] = await Promise.all([
-    getApprovedClasses(),
+    getFilteredClasses(),
     getLatestForumPosts(),
   ]);
 
@@ -21,6 +24,12 @@ export default async function HomePage() {
         classes={classesResponse.data}
         error={classesResponse.error}
       />
+
+      <WhyJoin />
+
+      <MeetTrainers />
+
+      <PricingPlans />
 
       {/* Layer 3: Clean Editorial Community Forum Highlights Section */}
       <LatestDiscussions

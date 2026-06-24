@@ -1,30 +1,69 @@
-import { MOCK_CLASSES_DB } from "@/lib/mock/classesData";
+import { MOCK_CLASSES_DB } from "../mock/classesData";
 
 /**
- * Server-Side Data Access Layer (DAL) for querying System Classes
+ * Server-Side Data Access Layer (DAL) for querying and filtering System Classes
  * Runs exclusively on the Server.
  */
-export async function getApprovedClasses() {
+export async function getFilteredClasses(filters = {}) {
   try {
-    // -------------------------------------------------------------
-    // FUTURE PRODUCTION LIVE BACKEND SEPARATION:
-    // const response = await fetch("http://localhost:5000/api/v1/classes", {
-    //   next: { revalidate: 3600 } // Cache data for 1 hour
-    // });
-    // if (!response.ok) throw new Error("Database failed to respond.");
-    // const json = await response.json();
-    // return json.data;
-    // -------------------------------------------------------------
-
-    // Local Data Simulation Mode (Simulating ultra-fast server-side data extraction)
+    const { search = "", category = "", level = "" } = filters;
     const data = MOCK_CLASSES_DB;
 
-    // Strict System Requirement Enforcement: Filter out anything that isn't explicitly approved [cite: 81]
-    const approvedClasses = data.filter((item) => item.status === "Approved");
+    // 1. Strict System Rule: Only approved classes can be consumed publicly
+    let filteredData = data.filter((item) => item.status === "Approved");
 
-    return { data: approvedClasses, error: null };
+    // 2. Apply Search Filter (Case Insensitive match against class name)
+    if (search) {
+      filteredData = filteredData.filter((item) =>
+        item.className.toLowerCase().includes(search.toLowerCase()),
+      );
+    }
+
+    // 3. Apply Category Filter
+    if (category) {
+      filteredData = filteredData.filter(
+        (item) => item.category.toLowerCase() === category.toLowerCase(),
+      );
+    }
+
+    // 4. Apply Difficulty Level Filter
+    if (level) {
+      filteredData = filteredData.filter(
+        (item) => item.difficultyLevel.toLowerCase() === level.toLowerCase(),
+      );
+    }
+
+    return { data: filteredData, error: null };
   } catch (error) {
-    console.error("DAL Error [getApprovedClasses]:", error);
-    return { data: [], error: error.message || "Failed to retrieve classes." };
+    console.error("DAL Error [getFilteredClasses]:", error);
+    return {
+      data: [],
+      error: error.message || "Failed to retrieve filtered classes.",
+    };
+  }
+}
+
+/**
+ * Server-Side Data Access Layer (DAL) for querying a single Class Document by ID
+ * Runs exclusively on the Server.
+ */
+export async function getClassById(classId) {
+  try {
+    const data = MOCK_CLASSES_DB;
+
+    // Search the collection index for the matching document
+    const targetClass = data.find((item) => item._id === classId);
+
+    if (!targetClass) {
+      throw new Error("Target training module could not be located.");
+    }
+
+    return { data: targetClass, error: null };
+  } catch (error) {
+    console.error(`DAL Error [getClassById for ID ${classId}]:`, error);
+    return {
+      data: null,
+      error: error.message || "Failed to retrieve class details.",
+    };
   }
 }

@@ -10,6 +10,8 @@ export default function LatestDiscussions({ posts, error }) {
           <span className="text-[11px] font-black tracking-widest text-brand-primary uppercase font-mono bg-brand-primary/10 px-4 py-1.5 rounded-full border border-brand-primary/20">
             Insights & Strategy Logs
           </span>
+          <br />
+          <br />
           <h2 className="text-3xl md:text-5xl font-black tracking-tight uppercase text-white font-heading leading-none">
             Strength-Building Tips <br />
             <span className="text-brand-secondary">For Daily Life</span>

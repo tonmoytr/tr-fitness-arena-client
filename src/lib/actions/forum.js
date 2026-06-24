@@ -1,30 +1,19 @@
-import { MOCK_FORUMS_DB } from "@/lib/mock/forumData";
-
 /**
  * Server-Side Data Access Layer (DAL) for querying Community Forum Posts
- * Runs exclusively on the Node server runtime.
+ * Connects dynamically over our separate Node server runtime environment.
  */
 export async function getLatestForumPosts() {
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
   try {
-    // -------------------------------------------------------------
-    // FUTURE BACKEND SERVER SEPARATION REPLACEMENT:
-    // const response = await fetch("http://localhost:5000/api/v1/forums");
-    // if (!response.ok) throw new Error("Forum database failed to respond.");
-    // const json = await response.json();
-    // return { data: json.data, error: null };
-    // -------------------------------------------------------------
+    // Tweak: Dynamically target your external Express system pipeline gateway
+    const response = await fetch(`${BASE_URL}/forums`, { cache: "no-store" });
+    if (!response.ok)
+      throw new Error("Forum database pipeline failed to respond.");
 
-    const data = MOCK_FORUMS_DB;
+    const postsData = await response.json();
 
-    // Strict Domain Policy: Only pass approved posts down to public views
-    const approvedPosts = data.filter((post) => post.status === "Approved");
-
-    // Chronological sorting: Newest posts cascade to the top
-    const sortedPosts = approvedPosts.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-    );
-
-    return { data: sortedPosts, error: null };
+    return { data: postsData, error: null };
   } catch (error) {
     console.error("DAL Error [getLatestForumPosts]:", error);
     return {
@@ -36,18 +25,19 @@ export async function getLatestForumPosts() {
 
 /**
  * Server-Side Data Access Layer (DAL) for querying a single Forum Post by ID
- * Runs exclusively on the Server.
  */
 export async function getForumPostById(postId) {
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
   try {
-    const data = MOCK_FORUMS_DB;
-
-    // Find matching document index
-    const targetPost = data.find((item) => item._id === postId);
-
-    if (!targetPost) {
+    // Fetch individual post detail profile node over express router parameter map
+    const response = await fetch(`${BASE_URL}/forums/${postId}`, {
+      cache: "no-store",
+    });
+    if (!response.ok)
       throw new Error("Target community discussion could not be located.");
-    }
+
+    const targetPost = await response.json();
 
     return { data: targetPost, error: null };
   } catch (error) {

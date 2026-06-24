@@ -5,7 +5,7 @@ import {
   HiOutlineUserCircle,
 } from "react-icons/hi2";
 import { getForumPostById } from "@/lib/actions/forum";
-import ForumInteractionWidget from "@/app/components/forum/ForumInteractionWidget";
+import ForumInteractionWidget from "@/components/forum/ForumInteractionWidget";
 
 export default async function ForumPostDetailsPage({ params }) {
   const { id } = await params;

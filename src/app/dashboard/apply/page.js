@@ -37,7 +37,7 @@ export default function ApplyAsTrainerPage() {
         <p className="text-xs text-gray-400 font-normal leading-relaxed flex items-start gap-2.5 bg-[#1b2026] p-4 rounded-xl border border-gray-800/40">
           <FaGraduationCap className="text-lg text-brand-secondary shrink-0 mt-0.5" />
           Submit your professional fitness background and specialization data
-          below. Once submitted, your profile index shifts to "Pending" while
+          below. Once submitted, your profile index shifts to Pending while
           platform administrators audit your background.
         </p>
 

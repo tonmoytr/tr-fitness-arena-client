@@ -26,13 +26,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body className="flex flex-col min-h-screen bg-brand-light text-brand-dark">
+      <body className="">
         <Providers>
           {/* Layout elements stay server-rendered wrappers */}
           <Navbar />
-          <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </main>
+          <main className="grow">{children}</main>
           <Footer />
         </Providers>
       </body>

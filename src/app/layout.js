@@ -1,8 +1,6 @@
 import { Inter, Space_Grotesk } from "next/font/google";
 import "@/app/globals.css";
 import Providers from "./Providers/Providers";
-import Navbar from "./components/shared/Navbar";
-import Footer from "./components/shared/Footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -10,7 +8,6 @@ const inter = Inter({
   display: "swap",
 });
 
-// Configure Space Grotesk for bold, athletic layout styling
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
@@ -26,12 +23,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body className="">
+      <body className="bg-[#1b2026] text-gray-100 min-h-screen flex flex-col antialiased">
         <Providers>
-          {/* Layout elements stay server-rendered wrappers */}
-          <Navbar />
-          <main className="grow">{children}</main>
-          <Footer />
+          {/* Dashboard and Public segments split beneath this clean window */}
+          {children}
         </Providers>
       </body>
     </html>

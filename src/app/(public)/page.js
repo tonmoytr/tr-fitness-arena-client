@@ -1,11 +1,12 @@
-import HeroBanner from "./components/home/HeroBanner";
-import FeaturedClasses from "./components/home/FeaturedClasses";
 import { getLatestForumPosts } from "@/lib/actions/forum";
-import LatestDiscussions from "./components/home/LatestDiscussion";
-import WhyJoin from "./components/home/WhyJoinUs";
-import MeetTrainers from "./components/home/MeetTrainers";
-import PricingPlans from "./components/home/PricingPlans";
+
 import { getFilteredClasses } from "@/lib/actions/classes";
+import HeroBanner from "@/components/home/HeroBanner";
+import FeaturedClasses from "@/components/home/FeaturedClasses";
+import WhyJoin from "@/components/home/WhyJoinUs";
+import MeetTrainers from "@/components/home/MeetTrainers";
+import PricingPlans from "@/components/home/PricingPlans";
+import LatestDiscussions from "@/components/home/LatestDiscussion";
 
 export default async function HomePage() {
   // Fire off both server-side queries in parallel to optimize processing speed

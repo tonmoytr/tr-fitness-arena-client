@@ -1,5 +1,5 @@
-import ClassCard from "@/app/components/cards/ClassCard";
-import SearchAndFilter from "@/app/components/classes/SearchAndFilters";
+import ClassCard from "@/components/cards/ClassCard";
+import SearchAndFilter from "@/components/classes/SearchAndFilters";
 import { getFilteredClasses } from "@/lib/actions/classes";
 
 export default async function ClassesCatalogPage({ searchParams }) {

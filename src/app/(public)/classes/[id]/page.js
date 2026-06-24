@@ -9,7 +9,7 @@ import {
   HiOutlineCalendar,
 } from "react-icons/hi2";
 import { getClassById } from "@/lib/actions/classes";
-import ClassBookingWidget from "@/app/components/classes/ClassBookingWidget";
+import ClassBookingWidget from "@/components/classes/ClassBookingWidget";
 
 export default async function ClassDetailsPage({ params }) {
   const { id } = await params;

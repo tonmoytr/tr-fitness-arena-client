@@ -65,17 +65,20 @@ function MemberNavigation({ currentPath, onLinkClick }) {
 }
 
 /* ==========================================================================
-   2. TRAINER SIDEBAR NAVIGATION SCHEMATIC
+   2. TRAINER SIDEBAR NAVIGATION SCHEMATIC (UPDATED & COMPLIANT)
    ========================================================================== */
 function TrainerNavigation({ currentPath, onLinkClick }) {
   const routes = [
     { label: "Trainer Console", path: "/dashboard", icon: FaChartBar },
+    { label: "Add Class Routine", path: "/dashboard/add-class", icon: FaCogs }, // FIXED: Path to see your new form!
     {
       label: "Manage Classes",
       path: "/dashboard/trainer-classes",
       icon: FaCalendarCheck,
     },
     { label: "Member Logs", path: "/dashboard/students", icon: FaUsers },
+    { label: "Add Forum Post", path: "/dashboard/add-forum", icon: FaCogs }, // Added requirement mapping
+    { label: "My Forum Posts", path: "/dashboard/my-forums", icon: FaUsers }, // Added requirement mapping
   ];
 
   return (

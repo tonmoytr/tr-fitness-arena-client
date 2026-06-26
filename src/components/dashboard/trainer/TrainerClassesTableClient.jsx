@@ -9,6 +9,7 @@ import DeleteConfirmModal from "./DeleteConfirmModal";
 import UpdateClassModal from "./UpdateClassModal";
 import { HiOutlineTrash, HiOutlineUsers } from "react-icons/hi";
 import { HiOutlinePencilSquare } from "react-icons/hi2";
+import Link from "next/link";
 
 // Clean Sub-Component Modal Sheet Hooks
 
@@ -114,8 +115,63 @@ export default function TrainerClassesTableClient() {
   return (
     <div className="space-y-6">
       {classes.length === 0 ? (
-        <div className="bg-brand-dark border border-gray-700/20 rounded-3xl p-12 text-center text-xs text-gray-400 max-w-md mx-auto">
-          <p className="font-mono">No built routines logged.</p>
+        <div className="bg-brand-dark border border-gray-800/60 rounded-3xl p-12 text-center max-w-md mx-auto relative overflow-hidden shadow-2xl group">
+          {/* High-impact top accent line */}
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-brand-secondary/40 to-transparent" />
+
+          <div className="space-y-6 relative z-10">
+            {/* Clean Minimal Icon Shield */}
+            <div className="w-14 h-14 bg-[#242b33]/60 border border-gray-800 rounded-2xl flex items-center justify-center text-gray-500 mx-auto group-hover:border-brand-secondary/30 group-hover:text-brand-secondary transition-all duration-300">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  pathLength="1"
+                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                />
+              </svg>
+            </div>
+
+            {/* Typography Hierarchy */}
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-black uppercase tracking-wider text-white font-heading">
+                Inventory Registry Empty
+              </h3>
+              <p className="text-[11px] text-gray-500 leading-relaxed max-w-[280px] mx-auto font-normal">
+                You haven&apos;t built or deployed any dynamic fitness routine
+                modules to the platform directory yet.
+              </p>
+            </div>
+
+            {/* Pro-Spec Action Node Trigger Link */}
+            <div className="pt-2">
+              <Link
+                href="/dashboard/add-class"
+                className="inline-flex items-center gap-2 bg-[#242b33] border border-gray-700/60 hover:border-brand-secondary hover:text-brand-secondary text-gray-300 text-[10px] font-mono font-black uppercase tracking-widest px-5 py-3 rounded-xl transition-all duration-200"
+              >
+                <span>Deploy First Blueprint</span>
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="bg-brand-dark border border-gray-700/30 rounded-3xl overflow-hidden shadow-2xl">

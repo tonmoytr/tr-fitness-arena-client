@@ -1,172 +1,325 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { authClient } from "@/lib/auth-client";
+
+import { toast } from "sonner";
 import {
-  HiOutlineHandThumbUp,
-  HiHandThumbUp,
-  HiOutlineHandThumbDown,
-  HiHandThumbDown,
-  HiOutlineChatBubbleLeftEllipsis,
+  HiOutlinePencil,
+  HiOutlineThumbDown,
+  HiOutlineThumbUp,
   HiOutlineTrash,
-  HiOutlinePencilSquare,
-  HiOutlineXMark,
-} from "react-icons/hi2";
+  HiThumbDown,
+  HiThumbUp,
+} from "react-icons/hi";
+import { HiOutlineChatBubbleLeft } from "react-icons/hi2";
 
-export default function ForumInteractionWidget({ postId, commentsCount }) {
-  const [vote, setVote] = useState({ type: null, count: 12 }); // Mock initialization tracking
-  const [commentInput, setCommentInput] = useState("");
-  const [localComments, setLocalComments] = useState([
-    {
-      id: "c1",
-      user: "Coach Alex Kovacs",
-      role: "Trainer",
-      text: "This approach completely minimizes central nervous system burnout during high-volume periods.",
-      timestamp: "2 hours ago",
-    },
-  ]);
+export default function ForumInteractionWidget({ postId }) {
+  // 1. BetterAuth Hook setup
+  const { data: session } = authClient.useSession();
+  const currentUser = session?.user;
 
-  const handleVote = (targetType) => {
-    if (vote.type === targetType) {
-      setVote({
-        type: null,
-        count: targetType === "up" ? vote.count - 1 : vote.count,
-      });
-    } else {
-      let change = vote.count;
-      if (vote.type === "up") change -= 1;
-      if (targetType === "up") change += 1;
-      setVote({ type: targetType, count: change });
+  // 2. Local reactive state matrices
+  const [postData, setPostData] = useState({
+    upvotes: 0,
+    downvotes: 0,
+    likedBy: [],
+    dislikedBy: [],
+    comments: [],
+  });
+  const [newCommentText, setNewCommentText] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingText, setEditingText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync initial database details state upon cluster load
+  useEffect(() => {
+    async function fetchLatestThreadDetails() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/forums/${postId}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setPostData({
+            upvotes: data.upvotes || 0,
+            downvotes: data.downvotes || 0,
+            likedBy: data.likedBy || [],
+            dislikedBy: data.dislikedBy || [],
+            comments: data.comments || [],
+          });
+        }
+      } catch (err) {
+        console.error("Failed syncing details context payload:", err);
+      }
+    }
+    fetchLatestThreadDetails();
+  }, [postId]);
+
+  // 3. VOTING INTERACTION CONTROLLER (Like / Dislike toggle)
+  const handleVote = async (voteType) => {
+    if (!currentUser) {
+      toast.error("Authentication required to interact with threads.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/v1/forums/${postId}/vote`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser.id, voteType }),
+        },
+      );
+
+      if (res.ok) {
+        const updatedArrays = await res.json();
+
+        // Update local state with the actual data arrays returned from backend
+        setPostData((prev) => ({
+          ...prev,
+          likedBy: updatedArrays.likedBy,
+          dislikedBy: updatedArrays.dislikedBy,
+        }));
+
+        toast.success("Vote metrics updated successfully!");
+      }
+    } catch (err) {
+      toast.error("Failed to sync vote with server.");
     }
   };
 
-  const handlePostComment = (e) => {
-    e.preventDefault();
-    if (!commentInput.trim()) return;
+  const hasLiked = postData.likedBy?.includes(currentUser?.id);
+  const hasDisliked = postData.dislikedBy?.includes(currentUser?.id);
 
-    const newComment = {
-      id: Date.now().toString(),
-      user: "Active Member",
-      role: "Member",
-      text: commentInput,
-      timestamp: "Just Now",
-    };
+  // 4. COMMENT ACTION CONTROLLER (CREATE / UPDATE / DELETE)
+  const handleCommentCRUD = async (
+    action,
+    commentId = null,
+    textValue = "",
+  ) => {
+    if (!currentUser) {
+      toast.error("Authentication required.");
+      return;
+    }
 
-    setLocalComments([newComment, ...localComments]);
-    setCommentInput("");
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/v1/forums/${postId}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action,
+            commentId,
+            userId: currentUser.id,
+            userName: currentUser.name,
+            userImage: currentUser.image,
+            text: textValue,
+          }),
+        },
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+
+        // Optimistic UI updates based on action block mutation type
+        if (action === "CREATE") {
+          setPostData((prev) => ({
+            ...prev,
+            comments: [...prev.comments, data.comment],
+          }));
+          setNewCommentText("");
+          toast.success("Comment indexed successfully.");
+        } else if (action === "UPDATE") {
+          setPostData((prev) => ({
+            ...prev,
+            comments: prev.comments.map((c) =>
+              c._id === commentId ? { ...c, text: textValue } : c,
+            ),
+          }));
+          setEditingCommentId(null);
+          toast.success("Comment modification complete.");
+        } else if (action === "DELETE") {
+          setPostData((prev) => ({
+            ...prev,
+            comments: prev.comments.filter((c) => c._id !== commentId),
+          }));
+          toast.success("Comment dropped from thread logs.");
+        }
+      }
+    } catch (err) {
+      toast.error("Communication with database layer timed out.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* 1. Professional Voting Matrix Row */}
-      <div className="flex items-center gap-3 bg-brand-dark border border-gray-700/20 p-3 rounded-2xl max-w-max shadow-md">
+      {/* VOTING METRIC CONTROL DOCK */}
+      <div className="bg-[#242b33] border border-gray-700/30 rounded-3xl p-4 flex items-center gap-6 shadow-md">
         <button
-          onClick={() => handleVote("up")}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            vote.type === "up"
-              ? "bg-brand-primary text-white"
-              : "text-gray-400 hover:text-white hover:bg-[#242b33]"
+          onClick={() => handleVote("like")}
+          className={`flex items-center gap-2 text-xs uppercase font-black tracking-widest px-4 py-2 rounded-xl transition-all border cursor-pointer ${
+            hasLiked
+              ? "bg-teal-500/10 border-teal-500 text-teal-400"
+              : "border-gray-800 text-gray-400 hover:text-white"
           }`}
         >
-          {vote.type === "up" ? (
-            <HiHandThumbUp className="text-sm" />
+          {hasLiked ? (
+            <HiThumbUp className="text-sm" />
           ) : (
-            <HiOutlineHandThumbUp className="text-sm" />
+            <HiOutlineThumbUp className="text-sm" />
           )}
-          <span>{vote.count}</span>
+          {/* FIXED: Read length property here to display numerical values */}
+          <span>{postData.likedBy?.length || 0} Upvotes</span>
         </button>
 
-        <div className="w-[1px] h-4 bg-gray-700" />
-
         <button
-          onClick={() => handleVote("down")}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            vote.type === "down"
-              ? "bg-brand-primary text-white"
-              : "text-gray-400 hover:text-white hover:bg-[#242b33]"
+          onClick={() => handleVote("dislike")}
+          className={`flex items-center gap-2 text-xs uppercase font-black tracking-widest px-4 py-2 rounded-xl transition-all border cursor-pointer ${
+            hasDisliked
+              ? "bg-red-500/10 border-red-500 text-red-400"
+              : "border-gray-800 text-gray-400 hover:text-white"
           }`}
         >
-          {vote.type === "down" ? (
-            <HiHandThumbDown className="text-sm" />
+          {hasDisliked ? (
+            <HiThumbDown className="text-sm" />
           ) : (
-            <HiOutlineHandThumbDown className="text-sm" />
+            <HiOutlineThumbDown className="text-sm" />
           )}
-          <span className="sr-only">Dislike</span>
+          {/* FIXED: Read length property here to display numerical values */}
+          <span>{postData.dislikedBy?.length || 0} Downvotes</span>
         </button>
       </div>
 
-      {/* 2. Structured Comment Input Panel */}
-      <div className="bg-brand-dark border border-gray-700/30 rounded-3xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-300 font-mono">
-          <HiOutlineChatBubbleLeftEllipsis className="text-brand-primary text-base" />
-          <span>Discussion Insight</span>
-        </div>
+      {/* COMMENTS LOG ACTIONS LOOP */}
+      <div className="bg-brand-dark border border-gray-700/30 rounded-3xl p-6 space-y-6 shadow-xl">
+        <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <HiOutlineChatBubbleLeft className="text-brand-secondary text-base" />
+          Discussion Thread ({postData.comments.length} Indexes)
+        </h3>
 
-        <form onSubmit={handlePostComment} className="space-y-3">
-          <textarea
-            value={commentInput}
-            onChange={(e) => setCommentInput(e.target.value)}
-            placeholder="Contribute clean empirical observations to this log line..."
-            rows={3}
-            className="w-full bg-[#1b2026] border border-gray-700/60 focus:border-brand-secondary rounded-xl p-4 text-xs text-white placeholder-gray-600 outline-none transition-all resize-none font-normal"
-          />
-          <div className="flex justify-end">
+        {/* INPUT: NEW COMMENT FORM */}
+        {currentUser ? (
+          <div className="space-y-3">
+            <textarea
+              rows={3}
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+              placeholder="Add your expert feedback parameters to this thread..."
+              className="w-full bg-[#1b2026] border border-gray-700/60 focus:border-brand-secondary rounded-xl p-4 text-xs text-white placeholder-gray-600 outline-none transition-all resize-none"
+            />
             <button
-              type="submit"
-              className="bg-brand-primary hover:bg-[#e04e1d] text-white font-black text-[10px] uppercase tracking-widest px-6 py-3.5 rounded-xl transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
+              onClick={() => handleCommentCRUD("CREATE", null, newCommentText)}
+              disabled={isSubmitting || !newCommentText.trim()}
+              className="bg-brand-secondary hover:bg-[#639396] text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl transition-all disabled:opacity-40 cursor-pointer"
             >
-              Post Insight Pass
+              {isSubmitting ? "Posting..." : "Commit Comment"}
             </button>
           </div>
-        </form>
-      </div>
+        ) : (
+          <div className="bg-[#242b33] border border-gray-800 rounded-xl p-4 text-center text-xs text-gray-400">
+            Please login to contribute to this forum log thread.
+          </div>
+        )}
 
-      {/* 3. High-Contrast Rendered Feed Logs Area */}
-      <div className="space-y-4">
-        <span className="text-[10px] font-black tracking-widest uppercase text-gray-500 font-mono block">
-          Verified Forum Logs Feed ({localComments.length})
-        </span>
-
-        <div className="space-y-4">
-          {localComments.map((comment) => (
-            <div
-              key={comment.id}
-              className="bg-brand-dark border border-gray-700/20 rounded-2xl p-5 flex gap-4 items-start shadow-md hover:border-gray-700/50 transition-all group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#242b33] border border-gray-700/40 text-brand-secondary font-black text-xs font-mono flex items-center justify-center shadow-inner">
-                {comment.user.substring(0, 2).toUpperCase()}
-              </div>
-
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between text-[11px]">
-                  <div>
-                    <span className="font-bold text-white mr-2 uppercase tracking-wide">
-                      {comment.user}
+        {/* LISTING VIEW STREAM */}
+        <div className="space-y-4 border-t border-gray-800/80 pt-4">
+          {postData.comments.length === 0 ? (
+            <p className="text-xs font-mono text-gray-600 italic">
+              No comment tracks indexed yet.
+            </p>
+          ) : (
+            postData.comments.map((comment) => (
+              <div
+                key={comment._id}
+                className="bg-[#242b33] border border-gray-700/20 rounded-2xl p-4 flex gap-3 relative group"
+              >
+                <img
+                  src={
+                    comment.userImage ||
+                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde"
+                  }
+                  alt={comment.userName}
+                  className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-700"
+                />
+                <div className="space-y-1 w-full">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-white uppercase tracking-wide">
+                      {comment.userName}
                     </span>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-[#1b2026] text-gray-400 border border-gray-800 font-semibold">
-                      {comment.role}
+                    <span className="text-[9px] text-gray-500 font-mono">
+                      {new Date(comment.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <span className="text-gray-500 font-mono">
-                    {comment.timestamp}
-                  </span>
-                </div>
 
-                <p className="text-xs text-gray-300 font-normal leading-relaxed">
-                  {comment.text}
-                </p>
+                  {/* EDIT FIELD VS PLAIN TEXT DISPLAY */}
+                  {editingCommentId === comment._id ? (
+                    <div className="space-y-2 pt-1">
+                      <input
+                        type="text"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        className="w-full bg-[#1b2026] border border-brand-primary rounded-lg px-3 py-2 text-xs text-white outline-none"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            handleCommentCRUD(
+                              "UPDATE",
+                              comment._id,
+                              editingText,
+                            )
+                          }
+                          className="text-[9px] font-black text-brand-primary uppercase tracking-widest bg-brand-primary/10 px-2 py-1 rounded"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingCommentId(null)}
+                          className="text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-800 px-2 py-1 rounded"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-300 font-light leading-relaxed">
+                      {comment.text}
+                    </p>
+                  )}
 
-                {/* Conditional CRUD Control handles - shown on card interaction hover */}
-                <div className="pt-2 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-mono font-bold text-gray-500">
-                  <button className="flex items-center gap-1 hover:text-white cursor-pointer">
-                    <HiOutlinePencilSquare /> Edit
-                  </button>
-                  <button className="flex items-center gap-1 hover:text-brand-primary cursor-pointer">
-                    <HiOutlineXMark /> Delete
-                  </button>
+                  {/* USER SPECIFIC ACTIONS PANEL */}
+                  {currentUser?.id === comment.userId &&
+                    editingCommentId !== comment._id && (
+                      <div className="flex items-center gap-3 pt-2 text-gray-500 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => {
+                            setEditingCommentId(comment._id);
+                            setEditingText(comment.text);
+                          }}
+                          className="flex items-center gap-1 hover:text-brand-primary text-[10px] uppercase font-bold font-mono cursor-pointer"
+                        >
+                          <HiOutlinePencil size={11} /> Edit
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleCommentCRUD("DELETE", comment._id)
+                          }
+                          className="flex items-center gap-1 hover:text-red-400 text-[10px] uppercase font-bold font-mono cursor-pointer"
+                        >
+                          <HiOutlineTrash size={11} /> Delete
+                        </button>
+                      </div>
+                    )}
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

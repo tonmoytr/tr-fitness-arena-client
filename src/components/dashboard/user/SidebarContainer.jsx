@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   FaChartBar,
   FaCalendarCheck,
@@ -16,6 +16,8 @@ import {
   FaCogs,
   FaUsers,
 } from "react-icons/fa";
+import { authClient } from "@/lib/auth-client"; // Verified Client SDK reference binding
+import { toast } from "sonner";
 
 /* ==========================================================================
    1. MEMBER SIDEBAR NAVIGATION SCHEMATIC
@@ -156,8 +158,28 @@ function AdminNavigation({ currentPath, onLinkClick }) {
 export default function SidebarContainer({ session }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const handleLinkExecution = () => setIsMobileOpen(false);
+
+  // FIXED: Relocated complete termination logic pipeline to the orchestrator layer
+  const handleLogoutClick = async () => {
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Session terminated. Exiting arena.");
+            setIsMobileOpen(false); // FIXED: Controlled accurate mobile visual drawer node state parameter
+            router.push("/");
+            router.refresh(); // Synchronizes layouts and drops session tokens immediately
+          },
+        },
+      });
+    } catch (err) {
+      console.error("Logout runtime execution fault:", err);
+      toast.error("Failed to safely terminate auth session.");
+    }
+  };
 
   return (
     <>
@@ -165,7 +187,7 @@ export default function SidebarContainer({ session }) {
       <header className="w-full h-16 bg-brand-dark border-b border-gray-800/60 fixed top-0 left-0 px-6 flex items-center justify-between lg:hidden z-40">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono font-black uppercase bg-brand-primary text-white px-2.5 py-1 rounded tracking-widest">
-            {session.role}
+            {session?.role || "user"}
           </span>
         </div>
         <button
@@ -199,10 +221,10 @@ export default function SidebarContainer({ session }) {
               </div>
               <div>
                 <h4 className="text-xs font-black uppercase tracking-wider text-white font-heading">
-                  {session.name}
+                  {session?.name || "Member User"}
                 </h4>
                 <span className="text-[9px] font-mono text-brand-secondary font-bold uppercase tracking-widest">
-                  {session.role} Portal
+                  {session?.role || "user"} Portal
                 </span>
               </div>
             </div>
@@ -217,19 +239,21 @@ export default function SidebarContainer({ session }) {
           </div>
 
           {/* Section: Smart Conditional Mapping based on Active Role Strings */}
-          {session.role === "admin" && (
+          {/* Section: Smart Conditional Mapping based on Active Role Strings */}
+          {session?.role === "admin" && (
             <AdminNavigation
               currentPath={pathname}
               onLinkClick={handleLinkExecution}
             />
           )}
-          {session.role === "trainer" && (
+          {session?.role === "trainer" && (
             <TrainerNavigation
               currentPath={pathname}
               onLinkClick={handleLinkExecution}
             />
           )}
-          {session.role === "member" && (
+          {/* FIXED: Added a check for both "user" and "member" to prevent layout drops */}
+          {(session?.role === "user" || session?.role === "member") && (
             <MemberNavigation
               currentPath={pathname}
               onLinkClick={handleLinkExecution}
@@ -250,16 +274,11 @@ export default function SidebarContainer({ session }) {
 
           {/* Action B: Complete Termination Sequence */}
           <button
-            onClick={() => {
-              handleLinkExecution();
-              // Future configuration pass: Clear authentication tokens, cookies, context values
-              alert(
-                "Initializing logout pipeline... Session context terminated cleanly.",
-              );
-            }}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest font-mono text-gray-500 hover:text-brand-primary hover:bg-brand-primary/5 transition-all cursor-pointer border border-transparent hover:border-brand-primary/20"
+            onClick={handleLogoutClick}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest font-mono text-gray-400 hover:text-red-400 hover:bg-red-500/5 transition-all cursor-pointer border border-transparent hover:border-red-500/10 group text-left"
           >
-            <FaSignOutAlt className="text-sm" /> Termination
+            <FaSignOutAlt className="text-sm text-gray-500 group-hover:text-red-400 transition-colors" />{" "}
+            Termination
           </button>
         </div>
       </aside>

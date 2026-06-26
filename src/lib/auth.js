@@ -14,4 +14,17 @@ export const auth = betterAuth({
     // Optional: if you don't provide a client, database transactions won't be enabled.
     client,
   }),
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+      },
+    },
+  },
+  session: {
+    expiresIn: 7 * 24 * 60 * 60, // Session duration: 7 days
+    updateAge: 24 * 60 * 60, // Refresh session cookie timestamp daily
+  },
 });

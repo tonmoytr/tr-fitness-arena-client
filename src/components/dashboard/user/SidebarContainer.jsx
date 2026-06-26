@@ -16,7 +16,7 @@ import {
   FaCogs,
   FaUsers,
 } from "react-icons/fa";
-import { authClient } from "@/lib/auth-client"; // Verified Client SDK reference binding
+import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
 /* ==========================================================================
@@ -65,20 +65,20 @@ function MemberNavigation({ currentPath, onLinkClick }) {
 }
 
 /* ==========================================================================
-   2. TRAINER SIDEBAR NAVIGATION SCHEMATIC (UPDATED & COMPLIANT)
+   2. TRAINER SIDEBAR NAVIGATION SCHEMATIC
    ========================================================================== */
 function TrainerNavigation({ currentPath, onLinkClick }) {
   const routes = [
     { label: "Trainer Console", path: "/dashboard", icon: FaChartBar },
-    { label: "Add Class Routine", path: "/dashboard/add-class", icon: FaCogs }, // FIXED: Path to see your new form!
+    { label: "Add Class Routine", path: "/dashboard/add-class", icon: FaCogs },
     {
       label: "Manage Classes",
       path: "/dashboard/trainer-classes",
       icon: FaCalendarCheck,
     },
     { label: "Member Logs", path: "/dashboard/students", icon: FaUsers },
-    { label: "Add Forum Post", path: "/dashboard/add-forum", icon: FaCogs }, // Added requirement mapping
-    { label: "My Forum Posts", path: "/dashboard/my-forums", icon: FaUsers }, // Added requirement mapping
+    { label: "Add Forum Post", path: "/dashboard/add-forum", icon: FaCogs },
+    { label: "My Forum Posts", path: "/dashboard/my-forums", icon: FaUsers },
   ];
 
   return (
@@ -165,16 +165,15 @@ export default function SidebarContainer({ session }) {
 
   const handleLinkExecution = () => setIsMobileOpen(false);
 
-  // FIXED: Relocated complete termination logic pipeline to the orchestrator layer
   const handleLogoutClick = async () => {
     try {
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
             toast.success("Session terminated. Exiting arena.");
-            setIsMobileOpen(false); // FIXED: Controlled accurate mobile visual drawer node state parameter
+            setIsMobileOpen(false);
             router.push("/");
-            router.refresh(); // Synchronizes layouts and drops session tokens immediately
+            router.refresh();
           },
         },
       });
@@ -184,13 +183,16 @@ export default function SidebarContainer({ session }) {
     }
   };
 
+  // Normalize string comparisons to lowercase safely
+  const activeRole = session?.role?.toLowerCase() || "user";
+
   return (
     <>
-      {/* Dynamic Mobile Header Bar Utility Panel (Hidden on Desktop Viewports) */}
+      {/* Dynamic Mobile Header Bar Utility Panel */}
       <header className="w-full h-16 bg-brand-dark border-b border-gray-800/60 fixed top-0 left-0 px-6 flex items-center justify-between lg:hidden z-40">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono font-black uppercase bg-brand-primary text-white px-2.5 py-1 rounded tracking-widest">
-            {session?.role || "user"}
+            {activeRole}
           </span>
         </div>
         <button
@@ -227,12 +229,11 @@ export default function SidebarContainer({ session }) {
                   {session?.name || "Member User"}
                 </h4>
                 <span className="text-[9px] font-mono text-brand-secondary font-bold uppercase tracking-widest">
-                  {session?.role || "user"} Portal
+                  {activeRole} Portal
                 </span>
               </div>
             </div>
 
-            {/* Close trigger exclusive for Mobile views */}
             <button
               onClick={() => setIsMobileOpen(false)}
               className="lg:hidden text-gray-500 hover:text-white text-sm p-1"
@@ -241,22 +242,20 @@ export default function SidebarContainer({ session }) {
             </button>
           </div>
 
-          {/* Section: Smart Conditional Mapping based on Active Role Strings */}
-          {/* Section: Smart Conditional Mapping based on Active Role Strings */}
-          {session?.role === "admin" && (
+          {/* Section: Conditional Mapping based on Active Role Strings */}
+          {activeRole === "admin" && (
             <AdminNavigation
               currentPath={pathname}
               onLinkClick={handleLinkExecution}
             />
           )}
-          {session?.role === "trainer" && (
+          {activeRole === "trainer" && (
             <TrainerNavigation
               currentPath={pathname}
               onLinkClick={handleLinkExecution}
             />
           )}
-          {/* FIXED: Added a check for both "user" and "member" to prevent layout drops */}
-          {(session?.role === "user" || session?.role === "member") && (
+          {(activeRole === "user" || activeRole === "member") && (
             <MemberNavigation
               currentPath={pathname}
               onLinkClick={handleLinkExecution}
@@ -264,9 +263,8 @@ export default function SidebarContainer({ session }) {
           )}
         </div>
 
-        {/* Section: Exit Gate Actions Suite (Pro Specification Compliant) */}
+        {/* Section: Exit Gate Actions Suite */}
         <div className="space-y-2 border-t border-gray-800/60 pt-4">
-          {/* Action A: Seamless Home Site Redirection (No Token Reset) */}
           <Link
             href="/"
             onClick={handleLinkExecution}
@@ -275,7 +273,6 @@ export default function SidebarContainer({ session }) {
             <FaHome className="text-sm text-gray-500" /> Return Home
           </Link>
 
-          {/* Action B: Complete Termination Sequence */}
           <button
             onClick={handleLogoutClick}
             className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest font-mono text-gray-400 hover:text-red-400 hover:bg-red-500/5 transition-all cursor-pointer border border-transparent hover:border-red-500/10 group text-left"

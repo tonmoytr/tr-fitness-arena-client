@@ -87,7 +87,7 @@ export default async function ClassDetailsPage({ params }) {
                 Assigned Lead
               </span>
               <span className="text-lg font-black text-white uppercase tracking-wide font-heading">
-                {trainer.name}
+                {trainer?.name || "Lead Coach"}
               </span>
             </div>
           </div>

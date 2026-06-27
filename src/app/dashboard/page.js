@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import UserOverview from "./user/UserOverview";
 import TrainerOverview from "./trainer/TrainerOverview";
+import AdminDashboardPage from "./admin/AdminPage";
 
 export default async function DashboardOverviewPage() {
   const session = await auth.api.getSession({
@@ -21,11 +22,7 @@ export default async function DashboardOverviewPage() {
   const userRole = currentUser.role?.toLowerCase() || "user";
 
   if (userRole === "admin") {
-    return (
-      <div className="text-xs text-white font-mono p-6">
-        Admin Overview Panel - Under Construction
-      </div>
-    );
+    return <AdminDashboardPage />;
   }
 
   // TRAINER ROLE ROUTING IMPLEMENTATION

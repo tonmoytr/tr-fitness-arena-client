@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { HiOutlineFolderOpen } from "react-icons/hi";
 
 /* ==========================================================================
    1. MEMBER SIDEBAR NAVIGATION SCHEMATIC
@@ -121,6 +122,11 @@ function AdminNavigation({ currentPath, onLinkClick }) {
       label: "Verify Trainers",
       path: "/dashboard/verify-applications",
       icon: FaUserCheck,
+    },
+    {
+      label: "Manage Classes",
+      path: "/dashboard/admin-classes",
+      icon: HiOutlineFolderOpen,
     },
     { label: "System Users", path: "/dashboard/users", icon: FaUsers },
   ];

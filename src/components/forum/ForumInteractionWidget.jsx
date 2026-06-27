@@ -65,7 +65,7 @@ export default function ForumInteractionWidget({ postId }) {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/v1/forums/${postId}/vote`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/forums/${postId}/vote`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -107,7 +107,7 @@ export default function ForumInteractionWidget({ postId }) {
     setIsSubmitting(true);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/v1/forums/${postId}/comments`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/forums/${postId}/comments`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

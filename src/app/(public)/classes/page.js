@@ -2,21 +2,21 @@ import ClassCard from "@/components/cards/ClassCard";
 import SearchAndFilter from "@/components/classes/SearchAndFilters";
 import { getFilteredClasses } from "@/lib/actions/classes";
 
+// FIXED: Made the function signature parameters handle async searchParams safely
 export default async function ClassesCatalogPage({ searchParams }) {
-  // Extract search queries from URL props safely
+  const resolvedParams = await searchParams;
+
   const filters = {
-    search: searchParams?.search || "",
-    category: searchParams?.category || "",
-    level: searchParams?.level || "",
+    search: resolvedParams?.search || "",
+    category: resolvedParams?.category || "",
+    level: resolvedParams?.level || "",
   };
 
-  // Direct server-side data pipeline extraction
   const { data: classes, error } = await getFilteredClasses(filters);
 
   return (
     <main className="w-full min-h-screen bg-[#1e242b] text-brand-light py-20 border-t border-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        {/* Simple Minimalistic Title Core */}
         <div className="space-y-2 border-b border-gray-800/60 pb-6">
           <span className="text-[10px] font-black tracking-widest text-brand-secondary uppercase font-mono">
             Training Directory
@@ -26,10 +26,8 @@ export default async function ClassesCatalogPage({ searchParams }) {
           </h1>
         </div>
 
-        {/* Control Layer (Client Input Shell pushing parameters directly to URL) */}
         <SearchAndFilter activeFilters={filters} />
 
-        {/* Core Catalog Dynamic Grid Layout presentation */}
         {error ? (
           <p className="text-sm text-red-400 font-mono font-medium">{error}</p>
         ) : classes.length === 0 ? (

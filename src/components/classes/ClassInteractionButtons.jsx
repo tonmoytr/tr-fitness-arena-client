@@ -24,7 +24,7 @@ export default function ClassInteractionButtons({ classId }) {
     async function fetchUserClassStatus() {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/v1/classes/${classId}/status?userId=${currentUser.id}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/classes/${classId}/status?userId=${currentUser.id}`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -46,7 +46,7 @@ export default function ClassInteractionButtons({ classId }) {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/v1/classes/favorites",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/classes/favorites`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

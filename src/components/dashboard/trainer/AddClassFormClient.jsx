@@ -56,9 +56,11 @@ export default function AddClassFormClient() {
           body: JSON.stringify({
             ...formData,
             days: selectedDays,
-            trainerId: currentUser.id,
-            trainerName: currentUser.name,
-            trainerEmail: currentUser.email,
+            trainer: {
+              id: currentUser.id,
+              name: currentUser.name,
+              email: currentUser.email,
+            },
           }),
         },
       );

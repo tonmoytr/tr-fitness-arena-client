@@ -64,7 +64,7 @@ export default function ClassCard({ fitnessClass }) {
             </div>
             <p className="text-xs text-gray-500 font-medium">
               Lead Coach:{" "}
-              <span className="font-bold text-gray-700">{trainer.name}</span>
+              <span className="font-bold text-gray-700">{trainer?.name || "Lead Coach"}</span>
             </p>
           </div>
         </div>

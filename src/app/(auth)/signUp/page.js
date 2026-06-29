@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 import {
   HiOutlineLockClosed,
@@ -219,16 +220,8 @@ export default function SignUpPage() {
 
         {/* Lottie Animation Wrapper Container Slot */}
         <div className="w-full max-w-sm aspect-square bg-[#242b33] rounded-3xl border border-gray-700/30 flex flex-col items-center justify-center p-8 text-center space-y-4 shadow-inner">
-          <div className="w-20 h-20 rounded-full border-4 border-dashed border-brand-primary/40 animate-spin flex items-center justify-center text-2xl">
-            🔥
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-black uppercase tracking-widest text-white font-heading">
-              Onboarding Engine
-            </p>
-            <p className="text-[11px] text-gray-500 font-mono font-bold">
-              LOTTIE_ANIMATION_HOLDER_NODE
-            </p>
+          <div className="w-full h-full flex items-center justify-center">
+            <DotLottieReact src="/animation/Login-Lady.json" loop autoplay />
           </div>
         </div>
       </div>

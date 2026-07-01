@@ -16,14 +16,9 @@ export default async function PaymentPage({ searchParams }) {
     redirect("/classes");
   }
 
-  // 1. Authenticate user
+  // 1. Authenticate user (guaranteed to exist by middleware)
   const session = await auth.api.getSession({ headers: await headers() });
   const currentUser = session?.user;
-
-  if (!currentUser) {
-    // Redirect to login if user session is absent
-    redirect(`/signIn?callbackUrl=/payment?classId=${classId}`);
-  }
 
   // 2. Fetch class details from DB actions
   const { data: fitnessClass, error } = await getClassById(classId);

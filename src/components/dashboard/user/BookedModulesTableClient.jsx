@@ -1,55 +1,98 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { IoCalendarNumberOutline } from "react-icons/io5";
 import { HiArrowTopRightOnSquare } from "react-icons/hi2";
+import { toast } from "sonner";
 
 export default function BookedModulesTableClient() {
   const { data: session } = authClient.useSession();
   const currentUser = session?.user;
+  const searchParams = useSearchParams();
 
   const [bookedClasses, setBookedClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isConfirming, setIsConfirming] = useState(false);
+  
+  // Use a ref to ensure we only attempt payment confirmation once
+  const confirmedRef = useRef(false);
+
+  const fetchBookedModules = async (userId) => {
+    try {
+      const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+      const res = await fetch(`${BASE_URL}/bookings?userId=${userId}`, {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error("Could not pull booking ledgers from backend.");
+      }
+
+      const data = await res.json();
+      setBookedClasses(data);
+    } catch (err) {
+      console.error("Booking logs fetching crash:", err);
+      toast.error("Could not fetch your active class bookings.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!currentUser) return;
 
-    async function fetchBookedModules() {
-      try {
-        // Initial setup data matching table schema criteria[cite: 6]
-        const mockBookingsData = [
-          {
-            _id: "b1",
-            className: "Hypertrophy Strength System",
-            trainerName: "Sarah Jenkins",
-            schedule: "Mon, Wed at 08:00 AM",
-            classId: "66790d0f",
-          },
-          {
-            _id: "b2",
-            className: "Core Vinyasa Flow",
-            trainerName: "David Miller",
-            schedule: "Tue, Thu at 06:00 PM",
-            classId: "66793e55",
-          },
-        ];
+    const sessionId = searchParams.get("session_id");
 
-        setBookedClasses(mockBookingsData);
-      } catch (err) {
-        console.error("Booking logs fetching crash:", err);
-      } finally {
-        setIsLoading(false);
+    const handleConfirmAndFetch = async () => {
+      // 1. If we have a Stripe checkout session ID in URL, trigger payment confirmation
+      if (sessionId && !confirmedRef.current) {
+        confirmedRef.current = true;
+        setIsConfirming(true);
+        const toastId = toast.loading("Verifying transaction with Stripe...");
+
+        try {
+          const res = await fetch("/api/checkout_sessions/confirm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sessionId }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || "Confirmation process failed.");
+          }
+
+          toast.success("Spot reservation successfully secured!", { id: toastId });
+          
+          // Clear query parameters from URL bar to prevent confirmation on refresh
+          window.history.replaceState({}, "", "/dashboard/booked");
+        } catch (err) {
+          console.error("Confirmation error:", err);
+          toast.error(err.message || "Payment verification failed.", { id: toastId });
+        } finally {
+          setIsConfirming(false);
+        }
       }
-    }
-    fetchBookedModules();
-  }, [currentUser]);
 
-  if (isLoading) {
+      // 2. Fetch the latest live bookings from backend
+      await fetchBookedModules(currentUser.id);
+    };
+
+    handleConfirmAndFetch();
+  }, [currentUser, searchParams]);
+
+  if (isLoading || isConfirming) {
     return (
       <div className="text-center font-mono text-xs text-gray-500 animate-pulse py-12">
-        Sifting active registration ledgers...
+        {isConfirming
+          ? "Securing slot reservation ledger with Stripe..."
+          : "Sifting active registration ledgers..."}
       </div>
     );
   }

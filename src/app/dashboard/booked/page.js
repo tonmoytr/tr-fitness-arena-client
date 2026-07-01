@@ -1,4 +1,5 @@
 import BookedModulesTableClient from "@/components/dashboard/user/BookedModulesTableClient";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Booked Modules | TR Fitness Arena",
@@ -18,8 +19,16 @@ export default async function BookedClassesPage() {
         </h1>
       </div>
 
-      {/* Clean downstream injection of client table renderer */}
-      <BookedModulesTableClient />
+      {/* Clean downstream injection of client table renderer with Suspense boundary */}
+      <Suspense
+        fallback={
+          <div className="text-center font-mono text-xs text-gray-500 animate-pulse py-12">
+            Loading active registration ledgers...
+          </div>
+        }
+      >
+        <BookedModulesTableClient />
+      </Suspense>
     </div>
   );
 }
